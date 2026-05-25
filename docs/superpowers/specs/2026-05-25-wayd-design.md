@@ -166,7 +166,7 @@ Each post is rendered in the terminal like this:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤡 cursed-code   ·   @mariorossi   ·   2h ago
+🤡 cursed-code   ·   @alex   ·   2h ago
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Looking at a doStuff() method that's 800 lines long,
@@ -224,13 +224,13 @@ WAYD: You have 3 new replies since last check (2 days ago).
   ◆ Your post: "Looking at a doStuff() method..."
     🤡 cursed-code · 3 days ago · 😂 12   ❤️ 4
     └─ 2 new replies
-       @anna: "lol I once saw a 1200-line one named handleStuff()"
-       @luca: "this is why I drink"
+       @sam: "lol I once saw a 1200-line one named handleStuff()"
+       @kim: "this is why I drink"
 
   ◆ Your post: "Is this what I wanted to be when I grew up?"
     🤔 existential · 5 days ago · 😭 8
     └─ 1 new reply
-       @giulio: "we all ask ourselves this around 2am"
+       @jordan: "we all ask ourselves this around 2am"
 
   [r]eply to one  [n]ext (mark all read)  [q]uit
 ```

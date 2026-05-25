@@ -1,19 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 520" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" role="img" aria-labelledby="title desc">
   <title id="title">WAYD: a meme-y social feed for programmers, built on GitHub Issues.</title>
-  <desc id="desc">Hero banner explaining WAYD in three steps: post a vibe, scroll a random feed of other programmers' posts, react and reply. Eight available vibes shown at the bottom: cursed-code, rip-me, brain-melt, dark-arts, hot-take, shower-thought, existential, procrastinating.</desc>
+  <desc id="desc">Animated hero banner explaining WAYD in three steps. Step 1: post a vibe under your real GitHub handle. Step 2: scroll a random feed of other programmers' posts. Step 3: react with emojis, reply with one line, or skip. Eight available vibes are shown at the bottom: cursed-code, rip-me, brain-melt, dark-arts, hot-take, shower-thought, existential, procrastinating.</desc>
 
   <defs>
-    <!-- Background gradient: dark blueprint -->
+    <!-- Page background gradient -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0d1117"/>
       <stop offset="100%" stop-color="#1a1f2e"/>
     </linearGradient>
 
-    <!-- Title accent gradient -->
+    <!-- Title gradient (animated via CSS) -->
     <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#79c0ff"/>
-      <stop offset="50%" stop-color="#d2a8ff"/>
-      <stop offset="100%" stop-color="#ff7b72"/>
+      <stop offset="0%" stop-color="#79c0ff">
+        <animate attributeName="stop-color" values="#79c0ff;#d2a8ff;#ff7b72;#79c0ff" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#d2a8ff">
+        <animate attributeName="stop-color" values="#d2a8ff;#ff7b72;#79c0ff;#d2a8ff" dur="8s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#ff7b72">
+        <animate attributeName="stop-color" values="#ff7b72;#79c0ff;#d2a8ff;#ff7b72" dur="8s" repeatCount="indefinite"/>
+      </stop>
     </linearGradient>
 
     <!-- Step number circle gradient -->
@@ -22,7 +28,7 @@
       <stop offset="100%" stop-color="#1f1638"/>
     </linearGradient>
 
-    <!-- Soft outer glow on the title -->
+    <!-- Soft glow filter for title -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
@@ -31,12 +37,12 @@
       </feMerge>
     </filter>
 
-    <!-- Reusable step card background -->
+    <!-- Step card shape -->
     <symbol id="stepCard" overflow="visible">
-      <rect x="0" y="0" rx="14" ry="14" width="370" height="180" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      <rect x="0" y="0" rx="14" ry="14" width="370" height="184" fill="#161b22" stroke="#30363d" stroke-width="1"/>
     </symbol>
 
-    <!-- Reusable vibe chip -->
+    <!-- Vibe chip shape -->
     <symbol id="vibeChip" overflow="visible">
       <rect x="0" y="0" rx="18" ry="18" width="146" height="40" fill="#21262d" stroke="#30363d" stroke-width="1"/>
     </symbol>
@@ -44,34 +50,99 @@
     <style>
       .mono { font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, Consolas, monospace; }
       .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+
+      /* Cursor blink */
+      @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+      .cursor { animation: blink 1s steps(2, end) infinite; }
+
+      /* Step number pulse: highlights numbers 1→2→3 in 8s loop */
+      @keyframes pulse-1 {
+        0%, 25%, 100% { fill: #d2a8ff; opacity: 1; }
+        33%, 92% { fill: #6b5b8c; opacity: 0.55; }
+      }
+      @keyframes pulse-2 {
+        0%, 30%, 100% { fill: #5a728a; opacity: 0.55; }
+        33%, 58% { fill: #79c0ff; opacity: 1; }
+        66%, 95% { fill: #5a728a; opacity: 0.55; }
+      }
+      @keyframes pulse-3 {
+        0%, 60%, 100% { fill: #8a5a5a; opacity: 0.55; }
+        66%, 92% { fill: #ff7b72; opacity: 1; }
+      }
+      .num-1 { animation: pulse-1 8s ease-in-out infinite; }
+      .num-2 { animation: pulse-2 8s ease-in-out infinite; }
+      .num-3 { animation: pulse-3 8s ease-in-out infinite; }
+
+      /* Step card halo: ring opacity follows the pulse */
+      @keyframes ring-1 {
+        0%, 25%, 100% { opacity: 0.6; }
+        33%, 92% { opacity: 0; }
+      }
+      @keyframes ring-2 {
+        0%, 30%, 100% { opacity: 0; }
+        33%, 58% { opacity: 0.6; }
+        66%, 95% { opacity: 0; }
+      }
+      @keyframes ring-3 {
+        0%, 60%, 100% { opacity: 0; }
+        66%, 92% { opacity: 0.6; }
+      }
+      .ring-1 { animation: ring-1 8s ease-in-out infinite; }
+      .ring-2 { animation: ring-2 8s ease-in-out infinite; }
+      .ring-3 { animation: ring-3 8s ease-in-out infinite; }
+
+      /* Arrow particle: dot that slides between cards */
+      @keyframes flow-1-to-2 {
+        0%, 25% { opacity: 0; transform: translateX(0); }
+        28% { opacity: 1; }
+        33% { opacity: 1; transform: translateX(22px); }
+        38% { opacity: 0; transform: translateX(22px); }
+        100% { opacity: 0; transform: translateX(0); }
+      }
+      @keyframes flow-2-to-3 {
+        0%, 58% { opacity: 0; transform: translateX(0); }
+        61% { opacity: 1; }
+        66% { opacity: 1; transform: translateX(22px); }
+        71% { opacity: 0; transform: translateX(22px); }
+        100% { opacity: 0; transform: translateX(0); }
+      }
+      .flow-12 { animation: flow-1-to-2 8s ease-in-out infinite; }
+      .flow-23 { animation: flow-2-to-3 8s ease-in-out infinite; }
+
+      /* Vibe chips: subtle stagger glow on the 8 chips */
+      @keyframes chip-glow {
+        0%, 100% { stroke: #30363d; }
+        50% { stroke: #4a5163; }
+      }
+      .chip-glow { animation: chip-glow 4s ease-in-out infinite; }
     </style>
   </defs>
 
   <!-- Page background -->
-  <rect width="1280" height="520" fill="url(#bg)"/>
+  <rect width="1280" height="480" fill="url(#bg)"/>
 
-  <!-- Faint decorative dots -->
+  <!-- Subtle corner dots -->
   <g fill="#30363d" opacity="0.4">
     <circle cx="30" cy="30" r="1.2"/>
     <circle cx="1250" cy="30" r="1.2"/>
-    <circle cx="30" cy="490" r="1.2"/>
-    <circle cx="1250" cy="490" r="1.2"/>
+    <circle cx="30" cy="450" r="1.2"/>
+    <circle cx="1250" cy="450" r="1.2"/>
   </g>
 
   <!-- ============================================================ -->
-  <!-- HEADER: title + tagline                                        -->
+  <!-- HEADER: badge + title + tagline                                -->
   <!-- ============================================================ -->
-  <g transform="translate(640, 80)" text-anchor="middle">
-    <!-- Pre-title small caps badge -->
-    <g transform="translate(0, -28)">
-      <rect x="-78" y="-14" rx="12" ry="12" width="156" height="22" fill="rgba(210,168,255,0.10)" stroke="#3d2a5c"/>
+  <g transform="translate(640, 56)" text-anchor="middle">
+    <!-- Small caps badge -->
+    <g transform="translate(0, -14)">
+      <rect x="-86" y="-14" rx="12" ry="12" width="172" height="22" fill="rgba(210,168,255,0.10)" stroke="#3d2a5c"/>
       <text y="2" class="mono" font-size="11" fill="#d2a8ff" letter-spacing="2">
         WHAT ARE YOU DOING?
       </text>
     </g>
 
-    <!-- Hero word "WAYD" -->
-    <text y="42" class="mono" font-size="78" font-weight="800" fill="url(#titleGrad)" filter="url(#glow)" letter-spacing="4">
+    <!-- WAYD hero word -->
+    <text y="46" class="mono" font-size="74" font-weight="800" fill="url(#titleGrad)" filter="url(#glow)" letter-spacing="4">
       WAYD
     </text>
 
@@ -79,7 +150,7 @@
     <text y="80" class="sans" font-size="18" fill="#c9d1d9">
       The coffee break for programmers using AI coding agents.
     </text>
-    <text y="106" class="sans" font-size="14" fill="#7d8590">
+    <text y="104" class="sans" font-size="13" fill="#7d8590">
       A meme-y social feed living inside Claude Code, Cursor, and Copilot. Built on GitHub Issues. No server, no signup.
     </text>
   </g>
@@ -87,84 +158,119 @@
   <!-- ============================================================ -->
   <!-- THREE-STEP STORY                                               -->
   <!-- ============================================================ -->
-  <g transform="translate(72, 232)">
+  <g transform="translate(72, 198)">
 
-    <!-- ========== STEP 1: POST A VIBE ========== -->
+    <!-- ========== STEP 1 ========== -->
     <g transform="translate(0, 0)">
       <use href="#stepCard"/>
+      <!-- Halo ring synced to step 1 -->
+      <rect class="ring-1" x="-3" y="-3" rx="16" ry="16" width="376" height="190" fill="none" stroke="#d2a8ff" stroke-width="2" opacity="0"/>
 
-      <!-- Number badge -->
       <g transform="translate(24, 26)">
         <circle cx="0" cy="0" r="18" fill="url(#numGrad)" stroke="#3d2a5c"/>
-        <text x="0" y="6" text-anchor="middle" class="mono" font-size="16" font-weight="700" fill="#d2a8ff">1</text>
+        <text class="num-1 mono" x="0" y="6" text-anchor="middle" font-size="16" font-weight="700" fill="#d2a8ff">1</text>
       </g>
 
-      <!-- Heading -->
       <text x="56" y="32" class="sans" font-size="17" font-weight="700" fill="#c9d1d9">Post a vibe</text>
 
-      <!-- Body -->
-      <text x="24" y="64" class="sans" font-size="13" fill="#7d8590">Pick a mood, write up to 1000 chars,</text>
-      <text x="24" y="82" class="sans" font-size="13" fill="#7d8590">publish under your real GitHub handle.</text>
+      <text x="24" y="62" class="sans" font-size="13" fill="#7d8590">Pick a mood, write up to 1000 chars,</text>
+      <text x="24" y="80" class="sans" font-size="13" fill="#7d8590">publish under your real GitHub handle.</text>
 
-      <!-- Mock command -->
-      <g transform="translate(24, 110)">
-        <rect x="0" y="0" rx="8" ry="8" width="322" height="48" fill="#0d1117" stroke="#21262d"/>
-        <text x="14" y="20" class="mono" font-size="11" fill="#7d8590">$ /wayd post</text>
-        <text x="14" y="38" class="mono" font-size="11" fill="#79c0ff">→ <tspan fill="#c9d1d9">git push --force on main at 23:47</tspan> 🪦</text>
+      <!-- Mock command box -->
+      <g transform="translate(24, 108)">
+        <rect x="0" y="0" rx="8" ry="8" width="322" height="52" fill="#0d1117" stroke="#21262d"/>
+        <text x="14" y="22" class="mono" font-size="11" fill="#7d8590">$ /wayd post</text>
+        <text x="14" y="40" class="mono" font-size="11">
+          <tspan fill="#79c0ff">→ </tspan><tspan fill="#c9d1d9">git push --force on main at 23:47</tspan> 🪦<tspan class="cursor" fill="#c9d1d9">▌</tspan>
+        </text>
       </g>
     </g>
 
     <!-- Arrow 1 → 2 -->
-    <g transform="translate(385, 90)" fill="#484f58">
+    <g transform="translate(382, 92)">
       <path d="M0,0 L18,0 M14,-5 L20,0 L14,5" stroke="#484f58" stroke-width="2" fill="none"/>
+      <!-- Flowing dot particle -->
+      <circle class="flow-12" cx="-2" cy="0" r="2.5" fill="#d2a8ff" opacity="0"/>
     </g>
 
-    <!-- ========== STEP 2: SCROLL THE FEED ========== -->
+    <!-- ========== STEP 2 ========== -->
     <g transform="translate(412, 0)">
       <use href="#stepCard"/>
+      <rect class="ring-2" x="-3" y="-3" rx="16" ry="16" width="376" height="190" fill="none" stroke="#79c0ff" stroke-width="2" opacity="0"/>
 
       <g transform="translate(24, 26)">
         <circle cx="0" cy="0" r="18" fill="url(#numGrad)" stroke="#3d2a5c"/>
-        <text x="0" y="6" text-anchor="middle" class="mono" font-size="16" font-weight="700" fill="#79c0ff">2</text>
+        <text class="num-2 mono" x="0" y="6" text-anchor="middle" font-size="16" font-weight="700" fill="#5a728a">2</text>
       </g>
 
       <text x="56" y="32" class="sans" font-size="17" font-weight="700" fill="#c9d1d9">Scroll a random feed</text>
 
-      <text x="24" y="64" class="sans" font-size="13" fill="#7d8590">See what other devs are coding through,</text>
-      <text x="24" y="82" class="sans" font-size="13" fill="#7d8590">one post at a time. Random order, TikTok-style.</text>
+      <text x="24" y="62" class="sans" font-size="13" fill="#7d8590">See what other devs are coding through,</text>
+      <text x="24" y="80" class="sans" font-size="13" fill="#7d8590">one post at a time. Random order, TikTok-style.</text>
 
       <!-- Mini post preview -->
-      <g transform="translate(24, 110)">
-        <rect x="0" y="0" rx="8" ry="8" width="322" height="48" fill="#0d1117" stroke="#21262d"/>
-        <text x="14" y="18" class="mono" font-size="11" fill="#c9d1d9">🤡 <tspan fill="#7d8590">cursed-code · @anna · 2h ago</tspan></text>
-        <text x="14" y="38" class="mono" font-size="10" fill="#c9d1d9">"800-line doStuff() method, written by me"</text>
+      <g transform="translate(24, 108)">
+        <rect x="0" y="0" rx="8" ry="8" width="322" height="52" fill="#0d1117" stroke="#21262d"/>
+        <text x="14" y="20" class="mono" font-size="11" fill="#c9d1d9">🤡 <tspan fill="#7d8590">cursed-code · @alex · 2h ago</tspan></text>
+        <text x="14" y="40" class="mono" font-size="10" fill="#c9d1d9">"800-line doStuff() method, written by me"</text>
       </g>
     </g>
 
     <!-- Arrow 2 → 3 -->
-    <g transform="translate(797, 90)" fill="#484f58">
+    <g transform="translate(794, 92)">
       <path d="M0,0 L18,0 M14,-5 L20,0 L14,5" stroke="#484f58" stroke-width="2" fill="none"/>
+      <circle class="flow-23" cx="-2" cy="0" r="2.5" fill="#79c0ff" opacity="0"/>
     </g>
 
-    <!-- ========== STEP 3: REACT + REPLY ========== -->
+    <!-- ========== STEP 3 ========== -->
     <g transform="translate(824, 0)">
       <use href="#stepCard"/>
+      <rect class="ring-3" x="-3" y="-3" rx="16" ry="16" width="376" height="190" fill="none" stroke="#ff7b72" stroke-width="2" opacity="0"/>
 
       <g transform="translate(24, 26)">
         <circle cx="0" cy="0" r="18" fill="url(#numGrad)" stroke="#3d2a5c"/>
-        <text x="0" y="6" text-anchor="middle" class="mono" font-size="16" font-weight="700" fill="#ff7b72">3</text>
+        <text class="num-3 mono" x="0" y="6" text-anchor="middle" font-size="16" font-weight="700" fill="#8a5a5a">3</text>
       </g>
 
       <text x="56" y="32" class="sans" font-size="17" font-weight="700" fill="#c9d1d9">React, reply, repeat</text>
 
-      <text x="24" y="64" class="sans" font-size="13" fill="#7d8590">Drop an emoji, reply with one line,</text>
-      <text x="24" y="82" class="sans" font-size="13" fill="#7d8590">or just skip to the next vibe. No pressure.</text>
+      <text x="24" y="62" class="sans" font-size="13" fill="#7d8590">Drop an emoji, reply with one line,</text>
+      <text x="24" y="80" class="sans" font-size="13" fill="#7d8590">or just skip to the next vibe. No pressure.</text>
 
-      <!-- Reactions row -->
-      <g transform="translate(24, 110)">
-        <rect x="0" y="0" rx="8" ry="8" width="322" height="48" fill="#0d1117" stroke="#21262d"/>
-        <text x="14" y="20" class="mono" font-size="14" fill="#c9d1d9">😂 12  ❤️ 4  🚀 1</text>
-        <text x="14" y="38" class="mono" font-size="11" fill="#7d8590">@luca: "this is why I drink"</text>
+      <!-- Animated reactions box -->
+      <g transform="translate(24, 108)">
+        <rect x="0" y="0" rx="8" ry="8" width="322" height="52" fill="#0d1117" stroke="#21262d"/>
+
+        <!-- 😂 counter: 1 → 12 -->
+        <text x="14" y="22" class="mono" font-size="14" fill="#c9d1d9">
+          😂 <tspan id="laugh-count">12</tspan>
+          <set attributeName="opacity" to="1"/>
+        </text>
+        <text x="14" y="22" class="mono" font-size="14" fill="#c9d1d9">
+          <tspan opacity="0">😂 </tspan>
+          <tspan>
+            <animate attributeName="opacity" values="1;1;0;0;0" keyTimes="0;0.7;0.71;0.99;1" dur="8s" repeatCount="indefinite"/>
+            1
+          </tspan>
+        </text>
+
+        <!-- ❤️ counter: fades in at 70% -->
+        <g>
+          <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.72;0.78;1" dur="8s" repeatCount="indefinite"/>
+          <text x="70" y="22" class="mono" font-size="14" fill="#c9d1d9">❤️ 4</text>
+        </g>
+
+        <!-- 🚀 counter: fades in at 80% -->
+        <g>
+          <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.85;0.9;1" dur="8s" repeatCount="indefinite"/>
+          <text x="124" y="22" class="mono" font-size="14" fill="#c9d1d9">🚀 1</text>
+        </g>
+
+        <!-- Reply text fades in toward the end of the loop -->
+        <g>
+          <animate attributeName="opacity" values="0;0;1;1" keyTimes="0;0.9;0.94;1" dur="8s" repeatCount="indefinite"/>
+          <text x="14" y="40" class="mono" font-size="11" fill="#7d8590">@kim: "this is why I drink"</text>
+        </g>
       </g>
     </g>
   </g>
@@ -172,42 +278,41 @@
   <!-- ============================================================ -->
   <!-- VIBE CHIPS at the bottom                                       -->
   <!-- ============================================================ -->
-  <g transform="translate(72, 442)">
-    <text x="568" y="-8" text-anchor="middle" class="mono" font-size="10" fill="#484f58" letter-spacing="2">
+  <g transform="translate(72, 408)">
+    <text x="568" y="-12" text-anchor="middle" class="mono" font-size="10" fill="#484f58" letter-spacing="2">
       8 VIBES TO CHOOSE FROM
     </text>
 
-    <!-- 8 chips in a single row, evenly spaced -->
-    <g transform="translate(0, 8)">
-      <use href="#vibeChip" x="0" y="0"/>
+    <g transform="translate(0, 4)">
+      <use href="#vibeChip" x="0" y="0" class="chip-glow"/>
       <text x="14" y="26" font-size="18">🤡</text>
       <text x="40" y="26" class="mono" font-size="11" fill="#c9d1d9">cursed-code</text>
 
-      <use href="#vibeChip" x="148" y="0"/>
+      <use href="#vibeChip" x="148" y="0" class="chip-glow"/>
       <text x="162" y="26" font-size="18">🪦</text>
       <text x="188" y="26" class="mono" font-size="11" fill="#c9d1d9">rip-me</text>
 
-      <use href="#vibeChip" x="296" y="0"/>
+      <use href="#vibeChip" x="296" y="0" class="chip-glow"/>
       <text x="310" y="26" font-size="18">🫠</text>
       <text x="336" y="26" class="mono" font-size="11" fill="#c9d1d9">brain-melt</text>
 
-      <use href="#vibeChip" x="444" y="0"/>
+      <use href="#vibeChip" x="444" y="0" class="chip-glow"/>
       <text x="458" y="26" font-size="18">🧙</text>
       <text x="484" y="26" class="mono" font-size="11" fill="#c9d1d9">dark-arts</text>
 
-      <use href="#vibeChip" x="592" y="0"/>
+      <use href="#vibeChip" x="592" y="0" class="chip-glow"/>
       <text x="606" y="26" font-size="18">🔥</text>
       <text x="632" y="26" class="mono" font-size="11" fill="#c9d1d9">hot-take</text>
 
-      <use href="#vibeChip" x="740" y="0"/>
+      <use href="#vibeChip" x="740" y="0" class="chip-glow"/>
       <text x="754" y="26" font-size="18">💭</text>
       <text x="780" y="26" class="mono" font-size="10" fill="#c9d1d9">shower-thought</text>
 
-      <use href="#vibeChip" x="888" y="0"/>
+      <use href="#vibeChip" x="888" y="0" class="chip-glow"/>
       <text x="902" y="26" font-size="18">🤔</text>
       <text x="928" y="26" class="mono" font-size="11" fill="#c9d1d9">existential</text>
 
-      <use href="#vibeChip" x="1036" y="0"/>
+      <use href="#vibeChip" x="1036" y="0" class="chip-glow"/>
       <text x="1050" y="26" font-size="18">☕</text>
       <text x="1076" y="26" class="mono" font-size="10" fill="#c9d1d9">procrastinating</text>
     </g>

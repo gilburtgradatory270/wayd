@@ -37,7 +37,7 @@ WAYD:  👋 Welcome back. You have 2 new replies on a post.
 You:   s
 
 WAYD:  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       🤡 cursed-code · @mariorossi · 2h ago
+       🤡 cursed-code · @alex · 2h ago
        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
        Looking at a doStuff() method that's 800 lines long,
