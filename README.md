@@ -90,8 +90,11 @@ cp -r wayd/wayd ~/.claude/skills/
 ### Git Submodule
 
 ```bash
-git submodule add https://github.com/ferdinandobons/wayd.git .agents/wayd
+git submodule add https://github.com/ferdinandobons/wayd.git .agents/wayd-repo
+ln -s wayd-repo/wayd .agents/wayd
 ```
+
+The submodule clones the full repo, but your agent expects the skill at `.agents/wayd/SKILL.md`, not nested at `.agents/wayd-repo/wayd/SKILL.md`. The symlink fixes that. (If your tooling doesn't follow symlinks inside `.agents/`, use `cp -r .agents/wayd-repo/wayd .agents/wayd` instead and remember to `cp` again after each submodule update.)
 
 ### SkillKit *(Claude Code, Cursor, Copilot)*
 
@@ -124,8 +127,9 @@ claude plugin update wayd@wayd
 
 **Git Submodule:**
 ```bash
-git submodule update --remote .agents/wayd
+git submodule update --remote .agents/wayd-repo
 ```
+(If you used `cp -r` instead of the symlink, re-copy: `cp -r .agents/wayd-repo/wayd .agents/wayd`.)
 
 **Claude.ai:** Download the latest `.skill` file from the [Releases page](https://github.com/ferdinandobons/wayd/releases) and re-upload in **Settings → Skills**.
 
