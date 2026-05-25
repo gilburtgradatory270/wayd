@@ -53,7 +53,7 @@ def cmd_fetch(_: argparse.Namespace) -> None:
             json_output=True,
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e, context="inbox"), code="gh_failed")
         return
 
     blocked = shared.load_blocked()
@@ -149,13 +149,6 @@ def _summarize_reactions(groups: list[dict]) -> list[dict]:
         if api and api in api_to_emoji:
             out.append({"emoji": api_to_emoji[api], "count": count})
     return out
-
-
-def _translate_gh_error(e: shared.GhError) -> str:
-    s = (e.stderr or "").lower()
-    if "could not resolve host" in s or "network" in s or e.returncode == 127:
-        return "Couldn't reach GitHub right now."
-    return "Couldn't load your inbox. Try again in a moment."
 
 
 def main() -> None:

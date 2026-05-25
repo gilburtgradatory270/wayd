@@ -24,7 +24,15 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 import shared  # noqa: E402
 
 
-def cmd_check_rate_limit(_: argparse.Namespace) -> None:
+def _check_rate_limit_internal() -> tuple[bool, int, int]:
+    """Internal helper used by both the standalone check and publish.
+
+    Returns (is_within_limit, remaining_slots, retry_in_min).
+    Side effect: prunes stale entries from recent_posts.
+
+    Splitting check from emit() lets publish() reuse the logic without
+    racing on JSON output. The check_rate_limit subcommand wraps this.
+    """
     cfg = shared.load_config()
     limit = cfg["limits"]["posts_per_hour"]
     state = shared.load_last_check()
@@ -41,16 +49,22 @@ def cmd_check_rate_limit(_: argparse.Namespace) -> None:
     shared.save_last_check(state)
 
     if len(fresh) >= limit:
-        # Find the oldest entry in the window — that's when one slot frees up
         oldest = min(
             datetime.fromisoformat(r["ts"].replace("Z", "+00:00")) for r in fresh
         )
         retry_at = oldest + timedelta(hours=1)
         retry_in_min = max(1, int((retry_at - datetime.now(timezone.utc)).total_seconds() / 60))
+        return (False, 0, retry_in_min)
+
+    return (True, limit - len(fresh), 0)
+
+
+def cmd_check_rate_limit(_: argparse.Namespace) -> None:
+    ok, remaining, retry_in_min = _check_rate_limit_internal()
+    if not ok:
         shared.emit({"ok": False, "code": "rate_limit", "retry_in_min": retry_in_min})
         return
-
-    shared.emit({"ok": True, "remaining": limit - len(fresh)})
+    shared.emit({"ok": True, "remaining": remaining})
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
@@ -74,6 +88,15 @@ def cmd_publish(args: argparse.Namespace) -> None:
         )
         return
 
+    # Defensive rate-limit check. Even though the caller (SKILL.md instructs
+    # Claude to call check_rate_limit first), we re-check here so the limit
+    # can't be bypassed by direct script invocation. Cheap to do, costly to
+    # skip.
+    ok, _, retry_in_min = _check_rate_limit_internal()
+    if not ok:
+        shared.emit({"ok": False, "code": "rate_limit", "retry_in_min": retry_in_min})
+        return
+
     title = shared.build_post_title(vibe["slug"], vibe["emoji"], text)
     body = shared.build_post_body(vibe["slug"], text, cfg["marker_version"])
 
@@ -90,7 +113,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         ).strip()
     except shared.GhError as e:
         shared.log_error(f"publish failed: {e}")
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     # URL looks like https://github.com/<owner>/<repo>/issues/123
@@ -145,7 +168,7 @@ def cmd_edit(args: argparse.Namespace) -> None:
             json_output=True,
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     parsed = shared.parse_post_body(raw["body"])
@@ -165,7 +188,7 @@ def cmd_edit(args: argparse.Namespace) -> None:
             ]
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     shared.emit({"ok": True, "post_id": args.post_id})
@@ -183,7 +206,7 @@ def cmd_soft_delete(args: argparse.Namespace) -> None:
             json_output=True,
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     identity = shared.load_identity()
@@ -213,24 +236,10 @@ def cmd_soft_delete(args: argparse.Namespace) -> None:
             ]
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     shared.emit({"ok": True, "post_id": args.post_id})
-
-
-def _translate_gh_error(e: shared.GhError) -> str:
-    """Turn a GhError into a user-facing sentence."""
-    s = (e.stderr or "").lower()
-    if "404" in s or "not found" in s:
-        return "That post isn't there anymore. Maybe the author deleted it."
-    if "403" in s or "permission" in s or "forbidden" in s:
-        return "GitHub says you can't do that. Try `gh auth status`."
-    if "rate limit" in s or "abuse" in s:
-        return "GitHub is rate-limiting us. Try again in a few minutes."
-    if "could not resolve host" in s or "network" in s or e.returncode == 127:
-        return "Couldn't reach GitHub right now. Check your connection."
-    return "Something went wrong on GitHub's end. Try again in a moment."
 
 
 def main() -> None:

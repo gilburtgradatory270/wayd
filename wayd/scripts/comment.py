@@ -40,23 +40,10 @@ def cmd_post(args: argparse.Namespace) -> None:
         )
     except shared.GhError as e:
         shared.log_error(f"comment failed: {e}")
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e, context="comment"), code="gh_failed")
         return
 
     shared.emit({"ok": True, "post_id": args.post_id})
-
-
-def _translate_gh_error(e: shared.GhError) -> str:
-    s = (e.stderr or "").lower()
-    if "404" in s or "not found" in s:
-        return "That post isn't there anymore. Maybe the author deleted it."
-    if "423" in s or "locked" in s:
-        return "This thread has been locked — probably because the post was deleted."
-    if "403" in s or "permission" in s or "forbidden" in s:
-        return "GitHub says you can't reply here right now."
-    if "could not resolve host" in s or "network" in s or e.returncode == 127:
-        return "Couldn't reach GitHub right now. Check your connection."
-    return "Couldn't post your reply. Try again in a moment."
 
 
 def main() -> None:

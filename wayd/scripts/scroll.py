@@ -50,7 +50,7 @@ def cmd_fetch(args: argparse.Namespace) -> None:
             json_output=True,
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     blocked = shared.load_blocked()
@@ -92,7 +92,7 @@ def cmd_thread(args: argparse.Namespace) -> None:
             json_output=True,
         )
     except shared.GhError as e:
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
     parsed = shared.parse_post_body(raw.get("body", ""))
@@ -154,15 +154,6 @@ def _summarize_reactions(groups: list[dict]) -> list[dict]:
         if api and api in api_to_emoji:
             out.append({"emoji": api_to_emoji[api], "count": count})
     return out
-
-
-def _translate_gh_error(e: shared.GhError) -> str:
-    s = (e.stderr or "").lower()
-    if "404" in s or "not found" in s:
-        return "That post isn't there anymore."
-    if "could not resolve host" in s or "network" in s or e.returncode == 127:
-        return "Couldn't reach GitHub right now. Check your connection."
-    return "Something went wrong on GitHub's end. Try again in a moment."
 
 
 def main() -> None:

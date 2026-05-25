@@ -374,3 +374,61 @@ def emit(payload: dict[str, Any]) -> None:
 def emit_error(human_message: str, code: str = "error") -> None:
     """Emit an error payload. The human_message is what the user should see."""
     emit({"ok": False, "code": code, "message": human_message})
+
+
+# ---------------------------------------------------------------------------
+# Error translation — gh error → user-friendly sentence
+# ---------------------------------------------------------------------------
+
+
+def translate_gh_error(e: "GhError", context: str = "default") -> str:
+    """Turn a GhError into a user-facing sentence.
+
+    The `context` arg lets callers tweak the wording for their specific
+    operation (e.g. "comment" → "Couldn't post your reply", "react" →
+    "Couldn't add your reaction"). The default is generic.
+    """
+    s = (e.stderr or "").lower()
+
+    # Not found — multiple shapes depending on REST vs GraphQL
+    if (
+        "404" in s
+        or "not found" in s
+        or "could not resolve to" in s   # GraphQL phrasing
+        or "no issues match" in s
+    ):
+        if context == "comment":
+            return "That post isn't there anymore. Maybe the author deleted it."
+        return "That post isn't there anymore."
+
+    # Locked thread (commenting on a soft-deleted post)
+    if "423" in s or "locked" in s:
+        return "This thread has been locked — probably because the post was deleted."
+
+    # Permissions / auth
+    if "403" in s or "permission" in s or "forbidden" in s:
+        if context == "comment":
+            return "GitHub says you can't reply here right now."
+        return "GitHub says you can't do that. Try `gh auth status`."
+
+    # Rate-limited by GitHub itself
+    if "rate limit" in s or "abuse" in s or "secondary rate" in s:
+        return "GitHub is rate-limiting us. Try again in a few minutes."
+
+    # Network / gh-not-installed
+    if (
+        "could not resolve host" in s
+        or "network" in s
+        or "connection" in s
+        or e.returncode == 127
+    ):
+        return "Couldn't reach GitHub right now. Check your connection and try again."
+
+    # Generic catch-all — vary by context so the user gets a hint
+    if context == "comment":
+        return "Couldn't post your reply. Try again in a moment."
+    if context == "react":
+        return "Couldn't add your reaction. Try again."
+    if context == "inbox":
+        return "Couldn't load your inbox. Try again in a moment."
+    return "Something went wrong on GitHub's end. Try again in a moment."

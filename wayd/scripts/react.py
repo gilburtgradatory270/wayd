@@ -50,19 +50,10 @@ def cmd_add(args: argparse.Namespace) -> None:
         )
     except shared.GhError as e:
         shared.log_error(f"react failed: {e}")
-        shared.emit_error(_translate_gh_error(e), code="gh_failed")
+        shared.emit_error(shared.translate_gh_error(e, context="react"), code="gh_failed")
         return
 
     shared.emit({"ok": True, "post_id": args.post_id, "emoji": args.emoji})
-
-
-def _translate_gh_error(e: shared.GhError) -> str:
-    s = (e.stderr or "").lower()
-    if "404" in s or "not found" in s:
-        return "That post isn't there anymore."
-    if "could not resolve host" in s or "network" in s or e.returncode == 127:
-        return "Couldn't reach GitHub right now."
-    return "Couldn't add your reaction. Try again."
 
 
 def main() -> None:
