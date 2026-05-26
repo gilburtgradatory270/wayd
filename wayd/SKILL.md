@@ -216,7 +216,7 @@ Orchestrate the compose flow yourself, walking the user through these steps. The
    ─────────────────────────────────────────────────────
    │   <emoji>  <vibe-slug>   ·   @<username>   ·   just now
    ─────────────────────────────────────────────────────
-   │   <text, wrapped softly to ~50 chars per line>
+   │   <text, wrapped softly to ~65 chars per line>
    ─────────────────────────────────────────────────────
    ```
    Then call the `AskUserQuestion` tool with the prompt "Publish this?" and these three options:
@@ -246,7 +246,7 @@ This is the core experience. Treat it as a tight loop: show a post → wait for 
    ─────────────────────────────────────────────────────
    │   <emoji>  <vibe-slug>   ·   @<author>   ·   <relative-time>
    ─────────────────────────────────────────────────────
-   │   <post text, wrapped softly to ~50 chars per line>
+   │   <post text, wrapped softly to ~65 chars per line>
    ─────────────────────────────────────────────────────
    │   <reactions>                       💬 N replies
    ─────────────────────────────────────────────────────
@@ -385,13 +385,15 @@ This is the authoritative rendering spec. The compose preview, the scroll view, 
   3. The separator is `─` repeated to match that longest-row length, with a minimum of 30 chars (so a 1-word body doesn't produce a comically short card).
 - **No corner characters** (`╭ ╮ ╰ ╯`). Top and bottom rows are pure `─` lines. The eye fills in the implied corners.
 - **Header row**: emoji + 2 spaces + vibe-slug + " · " + "@" + author + " · " + relative time. Don't pad the right side, let it end where it ends.
-- **Body rows**: wrap the post text *softly* to about 50 characters per line, breaking on whitespace. Each line is its own `│   <line>` row. Don't try to right-justify or pad.
+- **Body rows**: wrap the post text *softly* to about 65 characters per line, breaking on whitespace. Each line is its own `│   <line>` row. Don't try to right-justify or pad.
 - **Reactions row**: only present if at least one reaction exists. Emoji summary on the left ("😂 12   ❤️ 4   🚀 1"), reply count separated by some spaces if both are present ("💬 N replies"). Both flow naturally on a single row.
 - **Visual style**: think "elegant blockquote with section separators that hug the content", not "perfectly aligned ANSI box with fixed dimensions".
 
 ### Wrapping rule
 
-Wrap on whitespace, never break a word. Aim for ~50 chars per line as a soft target — going to 55 or 60 on a single line is fine if it avoids an awkward break. If a single word is longer than 60 chars (rare: a URL or a very long identifier), let it overflow naturally on its own line.
+Wrap on whitespace, never break a word. Aim for ~65 chars per line as a soft target. Going to 70 or 75 on a single line is fine if it avoids an awkward break. If a single word is longer than 75 chars (rare: a URL or a very long identifier), let it overflow naturally on its own line.
+
+A wider body makes the card feel more "post-like" and less cramped. The earlier ~50 target was too tight in practice and made posts wrap into many short lines.
 
 ### Empty states
 
@@ -401,28 +403,28 @@ Wrap on whitespace, never break a word. Aim for ~50 chars per line as a soft tar
 
 ### Examples
 
-**Full card (header + body + reactions)** — separator length adapts to the longest row (in this case the second body line):
+**Full card (header + body + reactions)** — separator length adapts to the longest row:
 ```
-───────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────
 │   🤡  cursed-code   ·   @alex   ·   2h ago
-───────────────────────────────────────────────────
-│   Looking at a doStuff() method that's 800 lines
-│   long, written by me 6 months ago. Who is that
-│   idiot?
-───────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────
+│   Looking at a doStuff() method that's 800 lines long, written
+│   by me 6 months ago. Who is that idiot?
+─────────────────────────────────────────────────────────────────────
 │   😂 12   ❤️ 4   🚀 1            💬 7 replies
-───────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────
 ```
 
 **Body-only card (no reactions yet, e.g. a freshly posted vibe)** — separator hugs whatever is longest:
 ```
-──────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────────────────
 │   🤔  existential   ·   @ferdinandobons   ·   just now
-──────────────────────────────────────────────────────
-│   8 hours a day in front of a screen, fixing bugs
-│   some dev before me shipped using an older version
-│   of Claude...
-──────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────────────────
+│   8 hours a day in front of a screen, fixing bugs some dev before
+│   me shipped using an older version of Claude... meanwhile outside
+│   the sun is out, people are socializing, living to the rhythm of
+│   nature. Is this what I imagined for myself?
+───────────────────────────────────────────────────────────────────────
 ```
 
 **Short card (a one-line vibe with no reactions)** — separator is shorter, hugs the longest of header or body:
