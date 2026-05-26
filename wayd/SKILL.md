@@ -13,7 +13,7 @@ Think: r/ProgrammerHumor energy, coffee-break vibe, lo-fi terminal experience.
 
 ## The non-negotiable principles
 
-These four principles override convenience. Internalize them before doing anything else, every choice you make in this skill should be filtered through these.
+These five principles override convenience. Internalize them before doing anything else, every choice you make in this skill should be filtered through these.
 
 ### 1. Backend opacity
 
@@ -110,7 +110,7 @@ Map what the user says to one of these intents. When in doubt, ask a one-line cl
 | `/wayd scroll <vibe>`, "show me cursed-code posts" | `scroll --vibe=X` | Scroll filtered by one vibe |
 | `next`, `n`, `skip` (in scroll) | `scroll_next` | Show next post |
 | `😂`, `react ❤️`, `lol` (in scroll) | `react` | Add reaction, advance to next |
-| `reply: <text>`, `comment: <text>` | `reply` | Post comment, advance to next |
+| `c: <text>`, `reply: <text>`, `comment: <text>` | `reply` | Post comment, advance to next |
 | `open thread`, `t`, "show replies" | `thread` | Show comments on the current post |
 | `/wayd inbox`, "any replies?" | `inbox` | List own posts with new replies since last check |
 | `/wayd delete` (with own post visible) | `delete` | Soft-delete the current post (with confirmation) |
@@ -248,11 +248,11 @@ This is the core experience. Treat it as a tight loop: show a post → wait for 
    ─────────────────────────────────────────────────────
    │   <post text, wrapped softly to ~65 chars per line>
    ─────────────────────────────────────────────────────
-   │   <reactions>                       💬 N replies
-   ─────────────────────────────────────────────────────
+   │   <reactions>                       💬 N replies      ← omit this section entirely if no reactions AND no replies
+   ─────────────────────────────────────────────────────   ← also omit this trailing separator if section above is omitted
    ```
    The relative time should be human-friendly: "2h ago", "yesterday", "3 days ago".
-   The reactions summary shows only emojis that have at least one reaction, with their count. If the post has no reactions yet, omit the reactions footer section entirely (just show the header + body, no third section).
+   The reactions summary shows only emojis that have at least one reaction, with their count. If the post has no reactions and no replies, omit the entire third section (the row AND its trailing separator). The card then has exactly 2 sections: header and body.
 
 4. **First time in scroll**, prepend a one-liner above the first post: "Tip: pick an action from the buttons, or type `q` to quit anytime." Set `seen_scroll_hint: true` in identity.json.
 
@@ -459,16 +459,21 @@ This is intentionally trivial to bypass (deleting the file resets it). It exists
 
 Every error gets translated into a human sentence. Never dump stack traces, JSON errors, or raw `gh` output to the user.
 
-| Internal failure | What the user sees |
+| Script `code` returned | What the user sees |
 |---|---|
-| `gh` returns non-zero (network) | "Couldn't reach GitHub right now. Check your connection and try again in a moment." |
-| `gh` returns 404 (post not found) | "That post isn't there anymore. Maybe the author deleted it." |
-| `gh` returns 403 (permissions) | "GitHub says you can't do that. Make sure you're logged in: `gh auth status`." |
-| Rate limit on GitHub side | "GitHub is rate-limiting us. Try again in a few minutes." |
-| Block list file unreadable | "Couldn't read the block list. Continuing without filtering." (Don't fail the scroll: log to data/error.log) |
-| Vibe slug invalid | "I don't recognize that vibe. Pick one of: <list>." |
-| Text >1000 chars | "Too long by N chars. Trim it down and try again." |
-| Text empty | "An empty post is just silence. Want to write something?" |
+| `gh_failed` with network in stderr | "Couldn't reach GitHub right now. Check your connection and try again in a moment." |
+| `gh_failed` with 404 / not found | "That post isn't there anymore. Maybe the author deleted it." |
+| `gh_failed` with 403 / permissions | "Looks like you're not authorized for that action. Try signing in again with `gh auth login`." (This is the one place we name `gh` to the user, because the action they need to take is to run that exact command. It's a deliberate exception to the backend-opacity principle.) |
+| `gh_failed` with rate limit / abuse | "GitHub is rate-limiting us. Try again in a few minutes." |
+| `bad_vibe` (script-emitted) | "I don't recognize that vibe. Pick one of: <list of 8>." |
+| `too_long` (script-emitted) | "Too long by N chars. Trim it down and try again." |
+| `empty` (script-emitted) | "An empty post is just silence. Want to write something?" |
+| `bad_post_id` (script-emitted) | "Something's off with that post reference. Try again from `/wayd scroll`." |
+| `parse_error` (script-emitted) | "Your post may have been created, but I couldn't confirm it. Check it in your scroll in a moment." (Rare: only when `gh` returns an unexpected URL format.) |
+| `no_identity` (script-emitted) | "Looks like setup isn't complete yet. Type `/wayd` to run the welcome flow first." |
+| `rate_limit` (script-emitted) | "Easy there: you've posted 5 times in the last hour. Try again in N minutes. (This limit prevents accidental spam.)" |
+| `partial_delete` (script-emitted) | "Your post was removed from the scroll, but cleanup didn't fully complete. New replies may still appear in the thread." |
+| Block list file unreadable (logged, not emitted) | (Silent. Logged to data/error.log. Scroll continues without filtering.) |
 
 ---
 

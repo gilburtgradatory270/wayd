@@ -144,6 +144,7 @@ def _default_identity() -> dict[str, Any]:
         "setup_complete": False,
         "seen_tour": False,
         "seen_scroll_hint": False,
+        "seen_compose_hint": False,
         "coc_accepted": False,
     }
 
@@ -194,6 +195,7 @@ def load_identity() -> dict[str, Any]:
         "setup_complete": bool,
         "seen_tour": bool,
         "seen_scroll_hint": bool,
+        "seen_compose_hint": bool,
         "coc_accepted": bool
       }
     """

@@ -25,8 +25,12 @@ def cmd_fetch(_: argparse.Namespace) -> None:
     identity = shared.load_identity()
     username = identity.get("username")
     if not username:
+        # No cached username means the user hasn't completed first-run setup.
+        # The orchestrator (SKILL.md) is responsible for re-routing them to
+        # /wayd setup based on the code, so this message is intentionally a
+        # short hint that the orchestrator will replace with its own phrasing.
         shared.emit_error(
-            "I don't know who you are yet. Try /wayd to run setup.",
+            "Setup not complete.",
             code="no_identity",
         )
         return

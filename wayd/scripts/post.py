@@ -3,9 +3,15 @@
 
 Subcommands:
   check_rate_limit            : emits {ok: bool, retry_in_min?: int}
-  publish --vibe S --text T   : creates the issue, emits {ok, post_id, url}
+  publish --vibe S --text T   : creates the issue, emits {ok, post_id}
   edit --post-id N --text T   : edits the body, emits {ok}
   soft_delete --post-id N     : locks/closes/marks body, emits {ok}
+
+publish deliberately does NOT include the issue URL in its payload. The
+backend-opacity principle in SKILL.md forbids exposing GitHub-native
+artifacts (URLs, raw issue numbers) to the user. post_id is what the
+orchestrator needs for the edit/delete 5-minute window; it stays
+internal to the data/last-check.json bookkeeping.
 
 All output is JSON on stdout (via shared.emit). User-facing strings live in
 SKILL.md and the calling Claude prompt, this script only handles mechanics.
@@ -127,8 +133,19 @@ def cmd_publish(args: argparse.Namespace) -> None:
         shared.emit_error(shared.translate_gh_error(e), code="gh_failed")
         return
 
-    # URL looks like https://github.com/<owner>/<repo>/issues/123
-    post_id = int(url.rsplit("/", 1)[-1])
+    # URL looks like https://github.com/<owner>/<repo>/issues/123.
+    # Guard against unexpected gh output formats (future gh version, redirect URL,
+    # empty stdout) so we never propagate a raw ValueError traceback to the user.
+    try:
+        post_id = int(url.rsplit("/", 1)[-1])
+    except ValueError:
+        shared.log_error(f"publish: unexpected URL format from gh: {url!r}")
+        shared.emit_error(
+            "Your post may have been created, but I couldn't confirm it. Check it in your scroll in a moment.",
+            code="parse_error",
+        )
+        return
+
     ts = shared.now_iso()
 
     # Track in rate-limit log and editable window. We deliberately don't
