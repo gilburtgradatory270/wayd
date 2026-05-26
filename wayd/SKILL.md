@@ -199,9 +199,9 @@ Orchestrate the compose flow yourself, walking the user through these steps. The
 4. **Show preview.** Render the post in a message above the confirmation, using the standard WAYD card format (see "Post card format" below). It must look exactly as it will appear when others see it in scroll, so the user can decide based on the real rendering:
    ```
    ─────────────────────────────────────────────────────
-   │   <emoji>  <vibe-slug>   ·   @<username>   ·   just now   │
+   │   <emoji>  <vibe-slug>   ·   @<username>   ·   just now
    ─────────────────────────────────────────────────────
-   │   <text, wrapped to ~47 chars per line>           │
+   │   <text, wrapped softly to ~50 chars per line>
    ─────────────────────────────────────────────────────
    ```
    Then call the `AskUserQuestion` tool with the prompt "Publish this?" and these three options:
@@ -229,11 +229,11 @@ This is the core experience. Treat it as a tight loop: show a post → wait for 
 3. **Render the post.** Use the standard WAYD card format (see "Post card format" below the scroll section). It looks like this:
    ```
    ─────────────────────────────────────────────────────
-   │   <emoji>  <vibe-slug>   ·   @<author>   ·   <relative-time>   │
+   │   <emoji>  <vibe-slug>   ·   @<author>   ·   <relative-time>
    ─────────────────────────────────────────────────────
-   │   <post text, wrapped to ~47 chars per line>      │
+   │   <post text, wrapped softly to ~50 chars per line>
    ─────────────────────────────────────────────────────
-   │   <reactions>                       💬 N replies  │
+   │   <reactions>                       💬 N replies
    ─────────────────────────────────────────────────────
    ```
    The relative time should be human-friendly: "2h ago", "yesterday", "3 days ago".
@@ -351,68 +351,68 @@ This is the authoritative rendering spec. The compose preview, the scroll view, 
 
 ```
 ─────────────────────────────────────────────────────
-│   <emoji>  <vibe-slug>   ·   @<author>   ·   <relative-time>   │
+│   <emoji>  <vibe-slug>   ·   @<author>   ·   <relative-time>
 ─────────────────────────────────────────────────────
-│   <body line 1, padded with 3 spaces on each side>│
-│   <body line 2>                                   │
-│   <body line 3, etc.>                             │
+│   <body line 1>
+│   <body line 2>
+│   <body line 3, etc.>
 ─────────────────────────────────────────────────────
-│   <reactions, only if any>           💬 N replies │
+│   <reactions, only if any>           💬 N replies
 ─────────────────────────────────────────────────────
 ```
 
 ### Specs
 
-- **Total width**: 55 columns including the `│` edges. Card itself is exactly 55 chars wide on every line.
-- **Edge characters**: `─` (U+2500, light horizontal) for top/bottom/separator rows. `│` (U+2502, light vertical) for left and right edges of content rows. No corner characters: top and bottom rows are pure `─` with no `╭ ╮ ╰ ╯`.
-- **Padding**: 3 spaces between the left `│` and the first content character. 3 spaces between the last content character and the right `│`. So usable content width is `55 - 2 - 6 = 47` characters.
-- **Header row**: emoji + 2 spaces + vibe-slug + " · " + "@" + author + " · " + relative time. Pad the right side with spaces so the closing `│` aligns at column 55.
-- **Body rows**: wrap the post text to 47 chars per line. Each wrapped line is its own `│   <line>                       │` row, padded on the right.
-- **Reactions row**: only present if at least one reaction exists. Emoji summary on the left ("😂 12   ❤️ 4   🚀 1"), reply count right-aligned ("💬 N replies"). Pad the middle with spaces.
-- **Separators**: pure `─────...─` lines between header / body / reactions and at the top and bottom. No padding spaces inside separators.
+- **Left edge only.** Each content row starts with `│` (U+2502, light vertical) + 3 spaces + content. No right edge. This is deliberate: emoji and Unicode characters have inconsistent display widths across terminals and fonts, so trying to align a right `│` always looks wrong somewhere. Without it, the card stays clean everywhere.
+- **Separator rows**: 53 horizontal `─` characters (U+2500). Use exactly the same length on every separator so the card has a consistent silhouette.
+- **No corner characters** (`╭ ╮ ╰ ╯`). The top and bottom rows are pure `─` lines. The eye fills in the implied corners.
+- **Header row**: emoji + 2 spaces + vibe-slug + " · " + "@" + author + " · " + relative time. Don't pad the right side, let it end where it ends.
+- **Body rows**: wrap the post text *softly* to about 50 characters per line, breaking on whitespace. Each line is its own `│   <line>` row. Don't try to right-justify or pad.
+- **Reactions row**: only present if at least one reaction exists. Emoji summary on the left ("😂 12   ❤️ 4   🚀 1"), reply count separated by some spaces if both are present ("💬 N replies"). Both flow naturally on a single row.
+- **Visual style**: think "elegant blockquote with section separators", not "perfectly aligned ANSI box".
 
 ### Wrapping rule
 
-Wrap on whitespace, never break a word. If a single word is longer than 47 chars (rare: a URL or a very long identifier), break it at character 47 with no hyphen.
+Wrap on whitespace, never break a word. Aim for ~50 chars per line as a soft target — going to 55 or 60 on a single line is fine if it avoids an awkward break. If a single word is longer than 60 chars (rare: a URL or a very long identifier), let it overflow naturally on its own line.
 
 ### Empty states
 
 - **Post with no reactions and no replies**: skip the third section entirely. The card has exactly 2 sections: header and body.
-- **Post with replies but no reactions**: still show the third row, with the emoji area empty: `│                                  💬 N replies │`.
-- **Post that's exactly 1 line of text**: still wrap the card to 55 cols. Body is just one row.
+- **Post with replies but no reactions**: still show the third row, with just the reply count: `│   💬 N replies`.
+- **Post that's exactly 1 line of text**: body is just one row.
 
 ### Examples
 
 **Full card (header + body + reactions):**
 ```
 ─────────────────────────────────────────────────────
-│   🤡  cursed-code   ·   @alex   ·   2h ago        │
+│   🤡  cursed-code   ·   @alex   ·   2h ago
 ─────────────────────────────────────────────────────
-│   Looking at a doStuff() method that's 800 lines  │
-│   long, written by me 6 months ago. Who is that   │
-│   idiot?                                          │
+│   Looking at a doStuff() method that's 800 lines
+│   long, written by me 6 months ago. Who is that
+│   idiot?
 ─────────────────────────────────────────────────────
-│   😂 12   ❤️ 4   🚀 1            💬 7 replies     │
+│   😂 12   ❤️ 4   🚀 1            💬 7 replies
 ─────────────────────────────────────────────────────
 ```
 
 **Body-only card (no reactions yet, e.g. a freshly posted vibe):**
 ```
 ─────────────────────────────────────────────────────
-│   🤔  existential   ·   @ferdinandobons   ·   just now   │
+│   🤔  existential   ·   @ferdinandobons   ·   just now
 ─────────────────────────────────────────────────────
-│   8 hours a day in front of a screen, fixing     │
-│   bugs some dev before me shipped using an older │
-│   version of Claude...                           │
+│   8 hours a day in front of a screen, fixing bugs
+│   some dev before me shipped using an older version
+│   of Claude...
 ─────────────────────────────────────────────────────
 ```
 
 ### Why this design
 
-- **4-sided "card" silhouette**: the closed contour creates Gestalt closure. The brain reads it as a single object, not three loose lines. This was a deliberate fix to the v0.1.0 layout which used only horizontal `━` lines that "dissolved" into the surrounding terminal text.
-- **Light box-drawing (`─` `│`) instead of heavy (`━`)**: leaves more visual air, which helps when several cards are stacked in a thread view.
-- **No corners (`╭ ╮ ╰ ╯`)**: tested against decorated corner variants. Corners felt too "stylized" and the user picked the cleaner intersection-free version. The card still reads as enclosed because the eye fills in the implied corners.
-- **Fixed width**: predictable on mobile (Claude.ai mobile, narrow terminals) and consistent across vibes regardless of post length.
+- **Left edge + separator rows, no right edge**: emoji and Unicode characters have inconsistent display widths across terminals and fonts. A right edge `│` *will* misalign sooner or later, especially with emojis (some render 1 cell wide, some 2). Dropping the right edge sidesteps the entire alignment problem and the card stays clean everywhere.
+- **Light box-drawing (`─` `│`) instead of heavy (`━`)**: leaves more visual air. The card reads as a quote-like object, not a heavy fenced box.
+- **No corners (`╭ ╮ ╰ ╯`)**: too "stylized" for the lo-fi terminal vibe. The eye fills in the implied corners.
+- **53-column separator rows**: predictable, consistent silhouette across cards. Wide enough for any reasonable post text, narrow enough to read on mobile without wrapping the separator itself.
 
 ---
 
