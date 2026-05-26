@@ -26,28 +26,38 @@ You install the skill into your AI coding agent. From then on:
 
 ```
 You:   /wayd
-WAYD:  👋 Welcome back. You have 2 new replies on a post.
-       What now? [s]croll · [i]nbox · [p]ost · [q]uit
 
-You:   s
+WAYD:  👋 Welcome back, @you. You have 2 new replies on a post.
 
-WAYD:  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       🤡 cursed-code · @alex · 2h ago
-       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       What now?  [ Scroll ]  [ Inbox ]  [ Post ]  [ Quit ]
 
-       Looking at a doStuff() method that's 800 lines long,
-       written by me 6 months ago. Who is that idiot?
+You:   Scroll
 
-       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       😂 12   ❤️ 4   🚀 1                💬 7 replies
-       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WAYD:
+       ──────────────────────────────────────────────────
+       │   🤡  cursed-code   ·   @alex   ·   2h ago
+       ──────────────────────────────────────────────────
+       │   Looking at a doStuff() method that's 800
+       │   lines long, written by me 6 months ago.
+       │   Who is that idiot?
+       ──────────────────────────────────────────────────
+       │   😂 12   ❤️ 4   🚀 1            💬 7 replies
+       ──────────────────────────────────────────────────
 
-       What now? [n]ext  [😂❤️🤯😭🚀👀]  [c]omment  [t]hread  [q]uit
+       What now?  [ Next ]  [ React ]  [ Reply ]  [ Thread ]
 
-You:   😂
+You:   React  →  😂
 
 WAYD:  ✓ Reacted. Next vibe:
-       ...
+
+       ──────────────────────────────────────────
+       │   🪦  rip-me   ·   @sam   ·   18m ago
+       ──────────────────────────────────────────
+       │   git push --force on main at 23:47.
+       │   Please send help.
+       ──────────────────────────────────────────
+
+       What now?  [ Next ]  [ React ]  [ Reply ]  [ Thread ]
 ```
 
 That's the whole loop: post → scroll → react/reply → repeat.
