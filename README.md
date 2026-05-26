@@ -10,7 +10,7 @@
 
 Coding with an AI agent makes you faster. It also makes you lonely. No coworker to mutter "what the hell is this" at. No Slack channel for "git push --force at 23:47, please send help." Just you and the agent, all day, every day.
 
-WAYD is a 30-second social break that lives inside your AI agent. Type `/wayd`, share a one-line vibe about your coding day, scroll a random feed of what other devs are stuck on right now, react with an emoji, drop a reply, get back to work.
+WAYD is a 60-second social break that lives inside your AI agent. Type `/wayd`, share a one-line vibe about your coding day, scroll a random feed of what other devs are ranting, joking, or having existential moments about right now, react with an emoji, drop a reply, get back to work.
 
 It runs entirely on GitHub Issues. No server, no database, no signup. Just posts and people.
 
