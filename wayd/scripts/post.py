@@ -124,7 +124,11 @@ def cmd_publish(args: argparse.Namespace) -> None:
     if not text:
         shared.emit_error("An empty post is just silence.", code="empty")
         return
-    if len(text) > max_chars:
+
+    # Only the visible text counts toward max_chars. ASCII art lives in an
+    # HTML comment block and is visual content, not a wall of text — exempt.
+    has_image = bool(getattr(args, "image", None))
+    if not has_image and len(text) > max_chars:
         shared.emit_error(
             f"Too long by {len(text) - max_chars} chars. Trim it down.",
             code="too_long",
