@@ -209,6 +209,12 @@ Orchestrate the compose flow yourself, walking the user through these steps. The
 2. **Ask for text.** "Got it: <emoji> <vibe>. What's going on? (1-1000 chars, anything you want.)"
    Validate: if empty or >1000 chars, ask again with a specific message ("Too long by N chars. Trim it down.").
 
+   **Image drag support.** If the user drags an image file into the prompt (or provides a file path ending in `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`), auto-convert it to ASCII art:
+   - Call `scripts/img2ascii.py --image <path> --max-chars <1000 - len(text)>` silently.
+   - On success: attach the art to the post using `--image <path>` in the publish call (step 5). The art is embedded invisibly in the GitHub issue body; readers in scroll see a "📎 ASCII image attached" indicator and can expand it on demand.
+   - On failure: continue without the image and mention "Couldn't convert the image — posting text only."
+   - The image is never uploaded anywhere; only the ASCII art text is stored in the post body.
+
 3. **Check rate limit.** Call `scripts/post.py check_rate_limit`. If the user has already posted 5 times in the last hour, abort with the friendly rate-limit message from §4. Don't proceed.
 
 4. **Show preview.** Render the post in a message above the confirmation, using the standard WAYD card format (see "Post card format" below). It must look exactly as it will appear when others see it in scroll, so the user can decide based on the real rendering:
@@ -225,7 +231,7 @@ Orchestrate the compose flow yourself, walking the user through these steps. The
    - `Cancel` — description: "Nothing happens. Your draft is discarded."
    - `Edit` — description: "Go back and change the text or vibe before publishing."
 
-5. **On `Publish`**, call `scripts/post.py publish --vibe <slug> --text <text>`. The script returns either success (with the new post's local ID) or failure. On success, show: "✓ Posted. Your vibe is live in others' scroll." Record the post ID and timestamp in `wayd/data/last-check.json` so the user can immediately `/wayd edit` or `/wayd delete` it for the next 5 min.
+5. **On `Publish`**, call `scripts/post.py publish --vibe <slug> --text <text> [--image <path>]`. The script returns either success (with the new post's local ID and `has_art: bool`) or failure. On success, show: "✓ Posted. Your vibe is live in others' scroll." Record the post ID and timestamp in `wayd/data/last-check.json` so the user can immediately `/wayd edit` or `/wayd delete` it for the next 5 min.
 
 6. **On `Cancel`**, end with: "Nothing posted. Come back when you've got something to say."
 
@@ -254,14 +260,31 @@ This is the core experience. Treat it as a tight loop: show a post → wait for 
    The relative time should be human-friendly: "2h ago", "yesterday", "3 days ago".
    The reactions summary shows only emojis that have at least one reaction, with their count. If the post has no reactions and no replies, omit the entire third section (the row AND its trailing separator). The card then has exactly 2 sections: header and body.
 
+   **ASCII art detection.** Before rendering, call `shared.extract_art(body)` to check if the post has an embedded ASCII image. If it does:
+   - Strip the art block from the displayed text using `shared.strip_art(body)` — never show raw `<!-- wayd:art ... -->` markup to the user.
+   - Add a fourth section to the card (always shown, even if no reactions):
+     ```
+     ─────────────────────────────────────────────────────
+     │   📎 ASCII image attached
+     ─────────────────────────────────────────────────────
+     ```
+   - Set a local flag `current_post_has_art = True` so step 5 can offer "View image".
+
 4. **First time in scroll**, prepend a one-liner above the first post: "Tip: pick an action from the buttons, or type `q` to quit anytime." Set `seen_scroll_hint: true` in identity.json.
 
-5. **Ask the user what to do next.** Call `AskUserQuestion` with the prompt "What now?" and these 4 options. The user clicks one (or taps "Other" to type `quit`, a specific emoji, or any other input). Typing emojis in a terminal is the single hardest input for new users, so this step is mandatory: do NOT show a plain-text action footer.
+5. **Ask the user what to do next.** Call `AskUserQuestion` with the prompt "What now?". Use 4 options, varying based on whether the current post has an ASCII image attached:
 
+   **If `current_post_has_art` is false** (standard post):
    - `Next` : "Skip this post, show me the next one."
    - `React` : "Add an emoji reaction. I'll pick the emoji on the next step."
    - `Reply` : "Write a one-line reply to this post."
    - `Thread` : "Show me the existing replies on this post first."
+
+   **If `current_post_has_art` is true** (post has embedded image):
+   - `Next` : "Skip this post, show me the next one."
+   - `View image` : "Expand the ASCII art image attached to this post."
+   - `React` : "Add an emoji reaction."
+   - `Reply` : "Write a one-line reply."
 
    Handle each variant:
 
@@ -269,6 +292,7 @@ This is the core experience. Treat it as a tight loop: show a post → wait for 
    - **React** → go to step 5a (reaction picker).
    - **Reply** → go to step 5b (reply composer).
    - **Thread** → call `scripts/scroll.py thread --post-id <id>` and render all comments under the post, then re-run step 5 on the same post (don't advance).
+   - **View image** → render the ASCII art inline below the post card (monospace code block), then re-run step 5 on the same post with `current_post_has_art = false` (so "View image" is replaced by "Thread" now that the art is visible).
    - **Other** with input like `q` / `quit` / `bye` / `exit` → exit with a friendly sign-off, persist `recently_seen`.
    - **Other** with a single emoji (`😂`, `❤️`, etc.) → treat as a direct reaction shortcut, call `scripts/react.py` with that emoji, advance.
 
@@ -508,6 +532,6 @@ If the user asks for these, politely explain they're not in the MVP and may come
 - Profile pages / following / friending.
 - Karma, streaks, trending, hall of fame.
 - Reactions on comments (only on posts in MVP).
-- Images, video, attachments.
+- Video, binary attachments. (Images are supported as ASCII art via `img2ascii.py`.)
 
 The reason: WAYD is a small, focused experience. Each of these features would multiply complexity without proportionally improving the core loop (post → scroll → react → repeat).

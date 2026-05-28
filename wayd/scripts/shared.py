@@ -266,6 +266,13 @@ def remove_blocked(username: str) -> bool:
 
 MARKER_RE = re.compile(r"<!--\s*wayd:(v\d+)\s+([^>]+?)\s*-->")
 
+# Matches the ASCII art block: <!-- wayd:art\n[art lines]\n-->
+# Group 1 = the art content (may be multi-line).
+ART_MARKER_RE = re.compile(
+    r"<!--\s*wayd:art\n(.*?)\n-->",
+    re.DOTALL,
+)
+
 
 def build_post_title(vibe_slug: str, vibe_emoji: str, body: str) -> str:
     """Build the issue title: '[<emoji> <slug>] <preview>'."""
@@ -278,6 +285,35 @@ def build_post_title(vibe_slug: str, vibe_emoji: str, body: str) -> str:
 def build_post_body(vibe_slug: str, text: str, marker_version: str = "v1") -> str:
     """Build the issue body with the trailing marker comment."""
     return f"{text.strip()}\n\n<!-- wayd:{marker_version} vibe={vibe_slug} -->"
+
+
+def build_post_body_with_art(
+    vibe_slug: str, text: str, art: str, marker_version: str = "v1"
+) -> str:
+    """Build issue body with embedded ASCII art in an HTML comment block.
+
+    The art block is invisible when GitHub renders the issue but parseable
+    by scroll.py. Format:
+        <text>
+
+        <!-- wayd:art
+        [ascii lines]
+        -->
+        <!-- wayd:v1 vibe=<slug> -->
+    """
+    art_block = f"<!-- wayd:art\n{art}\n-->"
+    return f"{text.strip()}\n\n{art_block}\n\n<!-- wayd:{marker_version} vibe={vibe_slug} -->"
+
+
+def extract_art(body: str) -> str | None:
+    """Return the ASCII art embedded in body, or None if not present."""
+    m = ART_MARKER_RE.search(body)
+    return m.group(1) if m else None
+
+
+def strip_art(body: str) -> str:
+    """Return body with the ASCII art block removed (for display purposes)."""
+    return ART_MARKER_RE.sub("", body).strip()
 
 
 def parse_post_body(body: str) -> dict[str, Any]:

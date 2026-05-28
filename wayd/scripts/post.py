@@ -84,6 +84,32 @@ def cmd_check_rate_limit(_: argparse.Namespace) -> None:
     shared.emit({"ok": True, "remaining": remaining})
 
 
+def _convert_image_to_art(image_path: str, text_len: int, max_chars: int) -> str | None:
+    """Convert image to ASCII art sized to fit within the remaining char budget.
+
+    Returns the art string, or None if conversion fails (caller logs the error
+    and continues without art so the post still goes through).
+    """
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
+    try:
+        from img2ascii import image_to_ascii  # type: ignore[import]
+    except ImportError:
+        shared.log_error("img2ascii not found; skipping image conversion")
+        return None
+
+    # Reserve chars for: text + 2 newlines + art block markers (~20 chars overhead)
+    budget = max_chars - text_len - 20
+    if budget < 50:
+        shared.log_error("not enough char budget for ASCII art after text")
+        return None
+
+    try:
+        return image_to_ascii(image_path=image_path, max_chars=budget)
+    except Exception as exc:
+        shared.log_error(f"img2ascii failed for {image_path!r}: {exc}")
+        return None
+
+
 def cmd_publish(args: argparse.Namespace) -> None:
     cfg = shared.load_config()
     repo = cfg["repo"]
@@ -98,7 +124,11 @@ def cmd_publish(args: argparse.Namespace) -> None:
     if not text:
         shared.emit_error("An empty post is just silence.", code="empty")
         return
-    if len(text) > max_chars:
+
+    # Only the visible text counts toward max_chars. ASCII art lives in an
+    # HTML comment block and is visual content, not a wall of text — exempt.
+    has_image = bool(getattr(args, "image", None))
+    if not has_image and len(text) > max_chars:
         shared.emit_error(
             f"Too long by {len(text) - max_chars} chars. Trim it down.",
             code="too_long",
@@ -114,8 +144,17 @@ def cmd_publish(args: argparse.Namespace) -> None:
         shared.emit({"ok": False, "code": "rate_limit", "retry_in_min": retry_in_min})
         return
 
+    # Optional ASCII art from image. Art is embedded as an HTML comment so it's
+    # invisible on GitHub.com but parseable by scroll.py for the "📎" indicator.
+    art: str | None = None
+    if getattr(args, "image", None):
+        art = _convert_image_to_art(args.image, len(text), max_chars)
+
     title = shared.build_post_title(vibe["slug"], vibe["emoji"], text)
-    body = shared.build_post_body(vibe["slug"], text, cfg["marker_version"])
+    if art:
+        body = shared.build_post_body_with_art(vibe["slug"], text, art, cfg["marker_version"])
+    else:
+        body = shared.build_post_body(vibe["slug"], text, cfg["marker_version"])
 
     try:
         url = shared.gh(
@@ -159,7 +198,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
     state.setdefault("editable_until", {})[str(post_id)] = editable_until
     shared.save_last_check(state)
 
-    shared.emit({"ok": True, "post_id": post_id})
+    shared.emit({"ok": True, "post_id": post_id, "has_art": art is not None})
 
 
 def cmd_edit(args: argparse.Namespace) -> None:
@@ -323,6 +362,7 @@ def main() -> None:
     p_pub = sub.add_parser("publish")
     p_pub.add_argument("--vibe", required=True)
     p_pub.add_argument("--text", required=True)
+    p_pub.add_argument("--image", default=None, help="Path to image; auto-converts to ASCII art")
     p_pub.set_defaults(func=cmd_publish)
 
     p_edit = sub.add_parser("edit")
